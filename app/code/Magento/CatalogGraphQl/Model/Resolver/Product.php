@@ -14,7 +14,6 @@ use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\GraphQl\Query\Resolver\ValueFactory;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use Magento\Framework\Exception\LocalizedException;
 
 /**
  * @inheritdoc
@@ -64,12 +63,9 @@ class Product implements ResolverInterface
         $this->productDataProvider->addEavAttributes($fields);
 
         $result = function () use ($value) {
-            $data = $value['product'] ?? $this->productDataProvider->getProductBySku($value['sku']);
+            $data = $this->productDataProvider->getProductBySku($value['sku']);
             if (empty($data)) {
                 return null;
-            }
-            if (!isset($data['model'])) {
-                throw new LocalizedException(__('"model" value should be specified'));
             }
             $productModel = $data['model'];
             /** @var \Magento\Catalog\Model\Product $productModel */
@@ -83,8 +79,10 @@ class Product implements ResolverInterface
                     }
                 }
             }
+
             return array_replace($value, $data);
         };
+
         return $this->valueFactory->create($result);
     }
 }

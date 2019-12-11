@@ -354,15 +354,7 @@ class DobTest extends TestCase
     public function getDateFormatDataProvider(): array
     {
         return [
-            [
-                'ar_SA',
-                preg_replace(
-                    '/[^MmDdYy\/\.\-]/',
-                    '',
-                    (new \IntlDateFormatter('ar_SA', \IntlDateFormatter::SHORT, \IntlDateFormatter::NONE))
-                        ->getPattern()
-                )
-            ],
+            ['ar_SA', 'd/M/y'],
             [Resolver::DEFAULT_LOCALE, self::DATE_FORMAT],
         ];
     }

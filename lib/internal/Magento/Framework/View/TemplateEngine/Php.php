@@ -3,11 +3,8 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-declare(strict_types=1);
-
 namespace Magento\Framework\View\TemplateEngine;
 
-use Magento\Framework\Escaper;
 use Magento\Framework\View\Element\BlockInterface;
 use Magento\Framework\View\TemplateEngineInterface;
 
@@ -31,22 +28,13 @@ class Php implements TemplateEngineInterface
     protected $_helperFactory;
 
     /**
-     * @var Escaper
-     */
-    private $escaper;
-
-    /**
      * Constructor
      *
      * @param \Magento\Framework\ObjectManagerInterface $helperFactory
-     * @param Escaper|null $escaper
      */
-    public function __construct(
-        \Magento\Framework\ObjectManagerInterface $helperFactory,
-        ?Escaper $escaper = null
-    ) {
+    public function __construct(\Magento\Framework\ObjectManagerInterface $helperFactory)
+    {
         $this->_helperFactory = $helperFactory;
-        $this->escaper = $escaper ?? $helperFactory->get(Escaper::class);
     }
 
     /**
@@ -60,7 +48,6 @@ class Php implements TemplateEngineInterface
      * @param array                    $dictionary
      * @return string
      * @throws \Exception
-     * @SuppressWarnings(PHPMD.UnusedLocalVariable)
      */
     public function render(BlockInterface $block, $fileName, array $dictionary = [])
     {
@@ -69,9 +56,6 @@ class Php implements TemplateEngineInterface
             $tmpBlock = $this->_currentBlock;
             $this->_currentBlock = $block;
             extract($dictionary, EXTR_SKIP);
-            //So it can be used in the template.
-            $escaper = $this->escaper;
-            // phpcs:ignore
             include $fileName;
             $this->_currentBlock = $tmpBlock;
         } catch (\Exception $exception) {

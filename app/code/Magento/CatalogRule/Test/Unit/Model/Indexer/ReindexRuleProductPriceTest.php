@@ -71,7 +71,6 @@ class ReindexRuleProductPriceTest extends \PHPUnit\Framework\TestCase
         $websiteId = 234;
         $defaultGroupId = 11;
         $defaultStoreId = 22;
-        $productId = 55;
 
         $websiteMock = $this->createMock(WebsiteInterface::class);
         $websiteMock->expects($this->once())
@@ -94,10 +93,11 @@ class ReindexRuleProductPriceTest extends \PHPUnit\Framework\TestCase
             ->with($defaultGroupId)
             ->willReturn($groupMock);
 
+        $productMock = $this->createMock(Product::class);
         $statementMock = $this->createMock(\Zend_Db_Statement_Interface::class);
         $this->ruleProductsSelectBuilderMock->expects($this->once())
             ->method('build')
-            ->with($websiteId, $productId, true)
+            ->with($websiteId, $productMock, true)
             ->willReturn($statementMock);
 
         $ruleData = [
@@ -126,6 +126,6 @@ class ReindexRuleProductPriceTest extends \PHPUnit\Framework\TestCase
         $this->pricesPersistorMock->expects($this->once())
             ->method('execute');
 
-        $this->assertTrue($this->model->execute(1, $productId, true));
+        $this->assertTrue($this->model->execute(1, $productMock, true));
     }
 }
