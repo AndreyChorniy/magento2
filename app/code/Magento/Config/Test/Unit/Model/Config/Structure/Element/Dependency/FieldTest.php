@@ -12,8 +12,6 @@ class FieldTest extends \PHPUnit\Framework\TestCase
      */
     const SIMPLE_VALUE = 'someValue';
 
-    const EMPTY_VALUE = '';
-
     const COMPLEX_VALUE1 = 'value_1';
 
     const COMPLEX_VALUE2 = 'value_2';
@@ -152,19 +150,8 @@ class FieldTest extends \PHPUnit\Framework\TestCase
         return [
             [$this->_getSimpleData(), true, [self::SIMPLE_VALUE]],
             [$this->_getSimpleData(), false, [self::SIMPLE_VALUE]],
-            [$this->_getSimpleEmptyData(), false, [static::EMPTY_VALUE]],
             [$this->_getComplexData(), true, $complexDataValues],
             [$this->_getComplexData(), false, $complexDataValues]
         ];
-    }
-
-    /**
-     * Providing a field data with no field value
-     *
-     * @return array
-     */
-    protected function _getSimpleEmptyData(): array
-    {
-        return ['dependPath' => ['section_2', 'group_3', 'field_4']];
     }
 }

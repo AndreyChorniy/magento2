@@ -6,6 +6,7 @@
 
 namespace Magento\CatalogRule\Model\Indexer;
 
+use Magento\Catalog\Model\Product;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Store\Model\StoreManagerInterface;
 
@@ -64,19 +65,19 @@ class ReindexRuleProductPrice
      * Reindex product prices.
      *
      * @param int $batchCount
-     * @param int|null $productId
+     * @param Product|null $product
      * @param bool $useAdditionalTable
      * @return bool
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    public function execute(int $batchCount, ?int $productId = null, bool $useAdditionalTable = false)
+    public function execute($batchCount, Product $product = null, $useAdditionalTable = false)
     {
         /**
          * Update products rules prices per each website separately
          * because for each website date in website's timezone should be used
          */
         foreach ($this->storeManager->getWebsites() as $website) {
-            $productsStmt = $this->ruleProductsSelectBuilder->build($website->getId(), $productId, $useAdditionalTable);
+            $productsStmt = $this->ruleProductsSelectBuilder->build($website->getId(), $product, $useAdditionalTable);
             $dayPrices = [];
             $stopFlags = [];
             $prevKey = null;

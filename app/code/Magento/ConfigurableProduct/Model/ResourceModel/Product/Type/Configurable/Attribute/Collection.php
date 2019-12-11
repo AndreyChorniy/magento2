@@ -331,7 +331,6 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
                     'use_default_value' => true
                 ];
             }
-            $item->setOptionsMap($values);
             $values = array_values($values);
             $item->setOptions($values);
         }

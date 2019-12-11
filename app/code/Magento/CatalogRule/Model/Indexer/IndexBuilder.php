@@ -242,22 +242,7 @@ class IndexBuilder
      */
     public function reindexById($id)
     {
-        try {
-            $this->cleanProductIndex([$id]);
-
-            $products = $this->productLoader->getProducts([$id]);
-            $activeRules = $this->getActiveRules();
-            foreach ($products as $product) {
-                $this->applyRules($activeRules, $product);
-            }
-
-            $this->reindexRuleGroupWebsite->execute();
-        } catch (\Exception $e) {
-            $this->critical($e);
-            throw new \Magento\Framework\Exception\LocalizedException(
-                __('Catalog rule indexing failed. See details in exception log.')
-            );
-        }
+        $this->reindexByIds([$id]);
     }
 
     /**
@@ -290,18 +275,11 @@ class IndexBuilder
     {
         $this->cleanProductIndex($ids);
 
-        /** @var Rule[] $activeRules */
-        $activeRules = $this->getActiveRules()->getItems();
-        foreach ($activeRules as $rule) {
-            $rule->setProductsFilter($ids);
-            $this->reindexRuleProduct->execute($rule, $this->batchCount);
+        $products = $this->productLoader->getProducts($ids);
+        $activeRules = $this->getActiveRules();
+        foreach ($products as $product) {
+            $this->applyRules($activeRules, $product);
         }
-
-        foreach ($ids as $productId) {
-            $this->cleanProductPriceIndex([$productId]);
-            $this->reindexRuleProductPrice->execute($this->batchCount, $productId);
-        }
-
         $this->reindexRuleGroupWebsite->execute();
     }
 
@@ -387,13 +365,17 @@ class IndexBuilder
      * Assign product to rule
      *
      * @param Rule $rule
-     * @param int $productEntityId
-     * @param array $websiteIds
+     * @param Product $product
      * @return void
      */
-    private function assignProductToRule(Rule $rule, int $productEntityId, array $websiteIds): void
+    private function assignProductToRule(Rule $rule, Product $product): void
     {
+        if (!$rule->validate($product)) {
+            return;
+        }
+
         $ruleId = (int) $rule->getId();
+        $productEntityId = (int) $product->getId();
         $ruleProductTable = $this->getTable('catalogrule_product');
         $this->connection->delete(
             $ruleProductTable,
@@ -403,6 +385,7 @@ class IndexBuilder
             ]
         );
 
+        $websiteIds = array_intersect($product->getWebsiteIds(), $rule->getWebsiteIds());
         $customerGroupIds = $rule->getCustomerGroupIds();
         $fromTime = strtotime($rule->getFromDate());
         $toTime = strtotime($rule->getToDate());
@@ -446,17 +429,12 @@ class IndexBuilder
      * @param Product $product
      * @return $this
      * @throws \Exception
-     * @deprecated
-     * @see ReindexRuleProduct::execute
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     protected function applyRule(Rule $rule, $product)
     {
-        if ($rule->validate($product)) {
-            $websiteIds = array_intersect($product->getWebsiteIds(), $rule->getWebsiteIds());
-            $this->assignProductToRule($rule, $product->getId(), $websiteIds);
-        }
-        $this->reindexRuleProductPrice->execute($this->batchCount, $product->getId());
+        $this->assignProductToRule($rule, $product);
+        $this->reindexRuleProductPrice->execute($this->batchCount, $product);
         $this->reindexRuleGroupWebsite->execute();
 
         return $this;
@@ -472,16 +450,11 @@ class IndexBuilder
     private function applyRules(RuleCollection $ruleCollection, Product $product): void
     {
         foreach ($ruleCollection as $rule) {
-            if (!$rule->validate($product)) {
-                continue;
-            }
-
-            $websiteIds = array_intersect($product->getWebsiteIds(), $rule->getWebsiteIds());
-            $this->assignProductToRule($rule, $product->getId(), $websiteIds);
+            $this->assignProductToRule($rule, $product);
         }
 
         $this->cleanProductPriceIndex([$product->getId()]);
-        $this->reindexRuleProductPrice->execute($this->batchCount, $product->getId());
+        $this->reindexRuleProductPrice->execute($this->batchCount, $product);
     }
 
     /**
@@ -534,7 +507,7 @@ class IndexBuilder
      */
     protected function applyAllRules(Product $product = null)
     {
-        $this->reindexRuleProductPrice->execute($this->batchCount, $product->getId());
+        $this->reindexRuleProductPrice->execute($this->batchCount, $product);
         $this->reindexRuleGroupWebsite->execute();
         return $this;
     }
@@ -589,7 +562,7 @@ class IndexBuilder
      */
     protected function getRuleProductsStmt($websiteId, Product $product = null)
     {
-        return $this->ruleProductsSelectBuilder->build((int) $websiteId, (int) $product->getId());
+        return $this->ruleProductsSelectBuilder->build($websiteId, $product);
     }
 
     /**

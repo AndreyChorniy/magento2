@@ -27,11 +27,6 @@ class LayoutPluginTest extends \PHPUnit\Framework\TestCase
      */
     protected $configMock;
 
-    /**
-     * @var \Magento\Framework\App\MaintenanceMode|\PHPUnit\Framework\MockObject\MockObject
-     */
-    private $maintenanceModeMock;
-
     protected function setUp()
     {
         $this->layoutMock = $this->getMockForAbstractClass(
@@ -45,33 +40,27 @@ class LayoutPluginTest extends \PHPUnit\Framework\TestCase
         );
         $this->responseMock = $this->createMock(\Magento\Framework\App\Response\Http::class);
         $this->configMock = $this->createMock(\Magento\PageCache\Model\Config::class);
-        $this->maintenanceModeMock = $this->createMock(\Magento\Framework\App\MaintenanceMode::class);
 
         $this->model = new \Magento\PageCache\Model\Layout\LayoutPlugin(
             $this->responseMock,
-            $this->configMock,
-            $this->maintenanceModeMock
+            $this->configMock
         );
     }
 
     /**
      * @param $cacheState
      * @param $layoutIsCacheable
-     * @param $maintenanceModeIsEnabled
-     *
      * @dataProvider afterGenerateXmlDataProvider
      */
-    public function testAfterGenerateXml($cacheState, $layoutIsCacheable, $maintenanceModeIsEnabled)
+    public function testAfterGenerateXml($cacheState, $layoutIsCacheable)
     {
         $maxAge = 180;
         $result = 'test';
 
         $this->layoutMock->expects($this->once())->method('isCacheable')->will($this->returnValue($layoutIsCacheable));
         $this->configMock->expects($this->any())->method('isEnabled')->will($this->returnValue($cacheState));
-        $this->maintenanceModeMock->expects($this->any())->method('isOn')
-            ->will($this->returnValue($maintenanceModeIsEnabled));
 
-        if ($layoutIsCacheable && $cacheState && !$maintenanceModeIsEnabled) {
+        if ($layoutIsCacheable && $cacheState) {
             $this->configMock->expects($this->once())->method('getTtl')->will($this->returnValue($maxAge));
             $this->responseMock->expects($this->once())->method('setPublicHeaders')->with($maxAge);
         } else {
@@ -87,11 +76,10 @@ class LayoutPluginTest extends \PHPUnit\Framework\TestCase
     public function afterGenerateXmlDataProvider()
     {
         return [
-            'Full_cache state is true, Layout is cache-able' => [true, true, false],
-            'Full_cache state is true, Layout is not cache-able' => [true, false, false],
-            'Full_cache state is false, Layout is not cache-able' => [false, false, false],
-            'Full_cache state is false, Layout is cache-able' => [false, true, false],
-            'Full_cache state is true, Layout is cache-able, Maintenance mode is enabled' => [true, true, true],
+            'Full_cache state is true, Layout is cache-able' => [true, true],
+            'Full_cache state is true, Layout is not cache-able' => [true, false],
+            'Full_cache state is false, Layout is not cache-able' => [false, false],
+            'Full_cache state is false, Layout is cache-able' => [false, true]
         ];
     }
 

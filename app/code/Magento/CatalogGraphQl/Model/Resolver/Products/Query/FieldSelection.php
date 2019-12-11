@@ -50,11 +50,11 @@ class FieldSelection
     {
         $fieldNames = [];
         foreach ($info->fieldNodes as $node) {
-            if ($node->name->value !== 'products' && $node->name->value !== 'variants') {
+            if ($node->name->value !== 'products') {
                 continue;
             }
             foreach ($node->selectionSet->selections as $selection) {
-                if ($selection->name->value !== 'items' && $selection->name->value !== 'product') {
+                if ($selection->name->value !== 'items') {
                     continue;
                 }
                 $fieldNames[] = $this->collectProductFieldNames($selection, $fieldNames);
